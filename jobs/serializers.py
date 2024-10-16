@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, JobSeeker, Employer
+from .models import User, JobSeeker, Employer, Job, Category, JobType, Skill, EducationLevel
 
 class RegisterSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(allow_blank=True, required=False)
@@ -58,3 +58,52 @@ class RegisterSerializer(serializers.ModelSerializer):
             Employer.objects.create(user=user, company_name=company_name)
 
         return user
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'description']
+
+class JobTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobType
+        fields = ['id', 'name', 'description']
+
+class SkillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Skill
+        fields = ['id', 'name', 'description']
+
+class EducationLevelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EducationLevel
+        fields = ['id', 'name', 'description']
+
+class JobSerializer(serializers.ModelSerializer):
+    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
+    job_type = serializers.PrimaryKeyRelatedField(queryset=JobType.objects.all())
+    skills = serializers.PrimaryKeyRelatedField(many=True, queryset=Skill.objects.all())
+    education_level = serializers.PrimaryKeyRelatedField(queryset=EducationLevel.objects.all())
+    date_posted = serializers.DateTimeField(format="%Y-%m-%d %H:%M", read_only=True)
+    active = serializers.BooleanField(read_only=True)
+    id = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Job
+        fields = ['id','title', 'description', 'experience_level', 'min_salary', 'max_salary', 'location', 'category', 'job_type', 'skills', 'education_level','date_posted','active']
+
+    def validate(self, data):
+        if data['min_salary'] > data['max_salary']:
+            raise serializers.ValidationError("Minimum salary can't be greater than maximum salary")
+        return data
+
+    def create(self, validated_data):
+        skills_data = validated_data.pop('skills', [])
+        request = self.context.get('request', None)
+        employer = Employer.objects.get(user=request.user)
+        job = Job.objects.create(employer=employer, **validated_data)
+        job.skills.set(skills_data)
+        return job
+
+

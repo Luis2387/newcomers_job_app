@@ -40,3 +40,51 @@ class CompanyProfile(models.Model):
     
     def __str__(self):
         return self.id
+
+
+class Category(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.name
+
+class JobType(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.name
+
+class Skill(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.name
+
+class EducationLevel(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.name
+
+class Job(models.Model):
+    employer = models.ForeignKey(Employer, on_delete=models.CASCADE, related_name="jobs")
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    location = models.CharField(max_length=255)
+    min_salary = models.DecimalField(max_digits=10, decimal_places=2)
+    max_salary = models.DecimalField(max_digits=10, decimal_places=2)
+    experience_level = models.CharField(max_length=50)
+    date_posted = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default=True)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
+    job_type = models.ForeignKey(JobType, on_delete=models.SET_NULL, null=True)
+    skills = models.ManyToManyField(Skill, blank=True)
+    education_level = models.ForeignKey(EducationLevel, on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return self.title
+
