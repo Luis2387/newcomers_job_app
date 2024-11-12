@@ -2,11 +2,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import RegisterSerializer
 from rest_framework import generics
-from .models import Category, JobType, Skill, EducationLevel, Job
+from .models import Category, JobType, Skill, EducationLevel, Job, CompanyProfile, Employer
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from .serializers import RegisterSerializer,CategorySerializer, JobTypeSerializer, SkillSerializer, EducationLevelSerializer, JobSerializer
+from .serializers import RegisterSerializer,CategorySerializer, JobTypeSerializer, SkillSerializer, EducationLevelSerializer, JobSerializer, CompanyProfileSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from django.db.models import Q
@@ -59,6 +59,11 @@ class JobCreateAPIView(generics.CreateAPIView):
     queryset = Job.objects.all()
     serializer_class = JobSerializer
 
+class JobDetailAPIView(generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
+    queryset = Job.objects.all()
+    serializer_class = JobSerializer
+
 
 class EmployerJobListAPIView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
@@ -81,6 +86,20 @@ class JobDeleteAPIView(generics.DestroyAPIView):
             return Response({"message": "Job deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
         else:
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+
+class JobUpdateAPIView(generics.RetrieveUpdateAPIView):
+    serializer_class = JobSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Job.objects.all()
+
+    def get_object(self):
+        obj = super().get_object()        
+        if obj.employer.user != self.request.user:
+            raise PermissionDenied("Failed to update Job")
+        return obj
 
 
 class JobSearchAPIView(generics.ListAPIView):
@@ -108,3 +127,17 @@ class JobSearchAPIView(generics.ListAPIView):
                 Q(education_level__name__icontains=search_term)
             ).distinct()  
         return queryset
+
+
+class EmployerProfileAPIView(generics.RetrieveUpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = CompanyProfileSerializer
+
+    def get_object(self):
+        
+        employer = getattr(self.request.user, 'employer', None)
+        
+        if not employer or not employer.company_profile:
+            raise NotFound("Company profile not assigned")
+       
+        return employer.company_profile

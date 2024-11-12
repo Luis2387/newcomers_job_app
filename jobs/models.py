@@ -37,9 +37,18 @@ class Employer(models.Model):
 
 class CompanyProfile(models.Model):
     profile_description = models.TextField(blank=True)
-    
+    phone = models.CharField(max_length=20, blank=True)
+    email = models.EmailField(blank=True)
+    website = models.URLField(blank=True)
+    facebook = models.URLField(blank=True)
+    twitter = models.URLField(blank=True)
+    linkedin = models.URLField(blank=True)
+    tiktok = models.URLField(blank=True)
+    location = models.CharField(max_length=255, blank=True)
+    category = models.ForeignKey('Category', on_delete=models.SET_NULL, null=True, blank=True)
+
     def __str__(self):
-        return self.id
+        return f"Profile {self.id}"
 
 
 class Category(models.Model):

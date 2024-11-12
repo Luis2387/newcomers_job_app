@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, JobSeeker, Employer, Job, Category, JobType, Skill, EducationLevel
+from .models import User, JobSeeker, Employer, Job, Category, JobType, Skill, EducationLevel, CompanyProfile
 
 class RegisterSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(allow_blank=True, required=False)
@@ -55,7 +55,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         if user_type == 'jobseeker':
             JobSeeker.objects.create(user=user)
         elif user_type == 'employer':
-            Employer.objects.create(user=user, company_name=company_name)
+            company_profile = CompanyProfile.objects.create()
+            Employer.objects.create(user=user, company_name=company_name, company_profile=company_profile)
 
         return user
 
@@ -107,3 +108,7 @@ class JobSerializer(serializers.ModelSerializer):
         return job
 
 
+class CompanyProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompanyProfile
+        fields = ['phone', 'email', 'website', 'profile_description', 'linkedin', 'facebook', 'twitter', 'tiktok', 'location', 'category']
