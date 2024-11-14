@@ -6,10 +6,11 @@ from .models import Category, JobType, Skill, EducationLevel, Job, CompanyProfil
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from .serializers import RegisterSerializer,CategorySerializer, JobTypeSerializer, SkillSerializer, EducationLevelSerializer, JobSerializer, CompanyProfileSerializer
+from .serializers import RegisterSerializer,CategorySerializer, JobTypeSerializer, SkillSerializer, EducationLevelSerializer, JobSerializer, CompanyProfileSerializer, JobSeekerProfileSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from django.db.models import Q
+from rest_framework.exceptions import NotFound
 
 
 class RegisterView(APIView):
@@ -141,3 +142,17 @@ class EmployerProfileAPIView(generics.RetrieveUpdateAPIView):
             raise NotFound("Company profile not assigned")
        
         return employer.company_profile
+
+
+class JobSeekerProfileAPIView(generics.RetrieveUpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = JobSeekerProfileSerializer
+
+    def get_object(self):
+
+        jobseeker = getattr(self.request.user, 'jobseeker', None)
+
+        if not jobseeker or not jobseeker.jobseeker_profile:
+            raise NotFound("Job seeker profile not assigned.")
+        
+        return jobseeker.jobseeker_profile

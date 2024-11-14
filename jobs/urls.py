@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import RegisterView, UserTypeProfileView, CategoryListView, JobTypeListView, SkillListView, EducationLevelListView, JobCreateAPIView, EmployerJobListAPIView, JobDeleteAPIView, JobSearchAPIView, EmployerProfileAPIView,JobUpdateAPIView, JobDetailAPIView
+from .views import RegisterView, UserTypeProfileView, CategoryListView, JobTypeListView, SkillListView, EducationLevelListView, JobCreateAPIView, EmployerJobListAPIView, JobDeleteAPIView, JobSearchAPIView, EmployerProfileAPIView,JobUpdateAPIView, JobDetailAPIView, JobSeekerProfileAPIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
@@ -19,4 +19,5 @@ urlpatterns = [
     path('delete-job/<int:pk>/', JobDeleteAPIView.as_view(), name='job-delete'),
     path('search-jobs/', JobSearchAPIView.as_view(), name='search-jobs'),
     path('employer-profile/', EmployerProfileAPIView.as_view(), name='employer-profile'),
+    path('candidate-profile/', JobSeekerProfileAPIView.as_view(), name='candidate-profile'),
 ]

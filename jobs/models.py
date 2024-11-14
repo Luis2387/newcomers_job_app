@@ -20,10 +20,15 @@ class JobSeeker(models.Model):
 
 
 class JobSeekerProfile(models.Model):
-    profile_description = models.TextField(blank=True)    
+    profile_description = models.TextField(blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+    email = models.EmailField(blank=True)
+    website = models.URLField(blank=True)
+    linkedin = models.URLField(blank=True)
+    location = models.CharField(max_length=255, blank=True)    
 
     def __str__(self):
-        return self.id
+        return f"Profile {self.id}"
 
 
 class Employer(models.Model):
