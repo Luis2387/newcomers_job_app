@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.utils.translation import gettext_lazy as _
 
 # Custom user model extending Django's AbstractUser
 class User(AbstractUser):
@@ -13,6 +14,7 @@ class User(AbstractUser):
 class JobSeeker(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)    
     jobseeker_profile = models.OneToOneField('JobSeekerProfile', on_delete=models.SET_NULL, null=True, blank=True)
+    resume = models.OneToOneField('Resume', on_delete=models.SET_NULL, null=True, blank=True, related_name='jobseeker_resume')
 
     
     def __str__(self):
@@ -29,6 +31,56 @@ class JobSeekerProfile(models.Model):
 
     def __str__(self):
         return f"Profile {self.id}"
+
+
+class Resume(models.Model):
+    candidate_skills = models.ManyToManyField('CandidateSkill', blank=True, related_name='resumes')  
+    educations = models.ManyToManyField('Education', blank=True, related_name='resumes')  
+    experiences = models.ManyToManyField('Experience', blank=True, related_name='resumes')
+
+    def __str__(self):
+        return f"Resume for {self.jobseeker_resume.user.username}"
+
+
+class CandidateSkill(models.Model):
+    name = models.CharField(max_length=255)
+    PROFICIENCY_CHOICES = [
+        ('basic', 'Basic'),
+        ('intermediate', 'Intermediate'),
+        ('advanced', 'Advanced'),
+    ]
+    proficiency = models.CharField(max_length=15, choices=PROFICIENCY_CHOICES, default='basic')
+
+    def __str__(self):
+        return f"{self.name} - {self.proficiency}"
+
+
+class EducationLevel(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Education(models.Model):
+    level = models.ForeignKey('EducationLevel', on_delete=models.CASCADE, null=True, blank=True)    
+    school = models.CharField(max_length=255)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    
+    def __str__(self):
+        return f"{self.level} - {self.school}"
+
+class Experience(models.Model):
+    company = models.CharField(max_length=255)
+    position = models.CharField(max_length=255)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    short_description = models.TextField(blank=True)
+    
+    def __str__(self):
+        return f"{self.position} at {self.company}"
 
 
 class Employer(models.Model):
@@ -77,12 +129,6 @@ class Skill(models.Model):
     def __str__(self):
         return self.name
 
-class EducationLevel(models.Model):
-    name = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
-
-    def __str__(self):
-        return self.name
 
 class Job(models.Model):
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, related_name="jobs")
@@ -101,4 +147,29 @@ class Job(models.Model):
 
     def __str__(self):
         return self.title
+
+
+
+class Application(models.Model):
+    class StatusChoices(models.TextChoices):
+        APPLIED = 'Applied', _('Applied')
+        UNDER_REVIEW = 'Under Review', _('Under Review')
+        INTERVIEWING = 'Interviewing', _('Interviewing')
+        SHORTLISTED = 'Shortlisted', _('Shortlisted')
+        HIRED = 'Hired', _('Hired')
+
+    jobseeker = models.ForeignKey(JobSeeker, on_delete=models.CASCADE, related_name='applications')
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='applications')
+    application_date = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(
+        max_length=50,
+        choices=StatusChoices.choices,
+        default=StatusChoices.APPLIED,
+    )
+
+    def __str__(self):
+        return f'{self.jobseeker} applied to {self.job}'
+
+    class Meta:
+        unique_together = ('jobseeker', 'job') 
 

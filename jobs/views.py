@@ -1,16 +1,16 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import RegisterSerializer
 from rest_framework import generics
-from .models import Category, JobType, Skill, EducationLevel, Job, CompanyProfile, Employer
+from .models import Category, JobType, Skill, EducationLevel, Job, CompanyProfile, Employer, Resume, Application
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from .serializers import RegisterSerializer,CategorySerializer, JobTypeSerializer, SkillSerializer, EducationLevelSerializer, JobSerializer, CompanyProfileSerializer, JobSeekerProfileSerializer
+from .serializers import RegisterSerializer,CategorySerializer, JobTypeSerializer, SkillSerializer, EducationLevelSerializer, JobSerializer, CompanyProfileSerializer, JobSeekerProfileSerializer, ResumeSerializer, ApplicationSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from django.db.models import Q
 from rest_framework.exceptions import NotFound
+from rest_framework import viewsets, mixins
 
 
 class RegisterView(APIView):
@@ -156,3 +156,36 @@ class JobSeekerProfileAPIView(generics.RetrieveUpdateAPIView):
             raise NotFound("Job seeker profile not assigned.")
         
         return jobseeker.jobseeker_profile
+
+
+class ResumeAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            resume = Resume.objects.get(jobseeker_resume__user=request.user)
+            serializer = ResumeSerializer(resume)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Resume.DoesNotExist:
+            return Response({"detail": "Resume not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request):
+        try:
+            resume = Resume.objects.get(jobseeker_resume__user=request.user)
+            serializer = ResumeSerializer(resume, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Resume.DoesNotExist:
+            return Response({"detail": "Resume not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class JobApplicationsListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        jobseeker = request.user.jobseeker
+        applications = Application.objects.filter(jobseeker=jobseeker).select_related('job', 'job__employer')
+        serializer = ApplicationSerializer(applications, many=True)
+        return Response(serializer.data)

@@ -1,5 +1,21 @@
-from django.urls import path
-from .views import RegisterView, UserTypeProfileView, CategoryListView, JobTypeListView, SkillListView, EducationLevelListView, JobCreateAPIView, EmployerJobListAPIView, JobDeleteAPIView, JobSearchAPIView, EmployerProfileAPIView,JobUpdateAPIView, JobDetailAPIView, JobSeekerProfileAPIView
+from django.urls import path, include
+from .views import (
+    RegisterView, 
+    UserTypeProfileView, 
+    CategoryListView, 
+    JobTypeListView, 
+    SkillListView, 
+    EducationLevelListView, 
+    JobCreateAPIView, 
+    EmployerJobListAPIView, 
+    JobDeleteAPIView, 
+    JobSearchAPIView, 
+    EmployerProfileAPIView,
+    JobUpdateAPIView, 
+    JobDetailAPIView, 
+    JobSeekerProfileAPIView, 
+    ResumeAPIView,
+    JobApplicationsListView)
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
@@ -20,4 +36,6 @@ urlpatterns = [
     path('search-jobs/', JobSearchAPIView.as_view(), name='search-jobs'),
     path('employer-profile/', EmployerProfileAPIView.as_view(), name='employer-profile'),
     path('candidate-profile/', JobSeekerProfileAPIView.as_view(), name='candidate-profile'),
+    path('resume/', ResumeAPIView.as_view(), name='resume'),
+    path('applications/', JobApplicationsListView.as_view(), name='job_applications_list'),
 ]
