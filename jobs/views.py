@@ -189,3 +189,30 @@ class JobApplicationsListView(APIView):
         applications = Application.objects.filter(jobseeker=jobseeker).select_related('job', 'job__employer')
         serializer = ApplicationSerializer(applications, many=True)
         return Response(serializer.data)
+
+
+class JobApplicantsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, job_id):
+        applications = Application.objects.filter(job__id=job_id).select_related('jobseeker__user')
+        serializer = ApplicationSerializer(applications, many=True)
+        return Response(serializer.data)
+
+
+class ApplicationStatusUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        try:
+            application = Application.objects.get(pk=pk)
+            status_value = request.data.get("status")
+            if status_value:
+                application.status = status_value
+                application.save()
+                serializer = ApplicationSerializer(application)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response({"error": "Status is required."}, status=status.HTTP_400_BAD_REQUEST)
+        except Application.DoesNotExist:
+            return Response({"error": "Application not found."}, status=status.HTTP_404_NOT_FOUND)

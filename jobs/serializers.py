@@ -89,10 +89,9 @@ class EmployerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employer
         fields = ['id', 'company_name']
-        
+
 
 class JobSerializer(serializers.ModelSerializer):
-    employer = EmployerSerializer()
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
     job_type = serializers.PrimaryKeyRelatedField(queryset=JobType.objects.all())
     skills = serializers.PrimaryKeyRelatedField(many=True, queryset=Skill.objects.all())
@@ -103,7 +102,7 @@ class JobSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Job
-        fields = ['id','title', 'description', 'experience_level', 'min_salary', 'max_salary', 'location', 'category', 'job_type', 'skills', 'education_level','date_posted','active', 'employer']
+        fields = ['id','title', 'description', 'experience_level', 'min_salary', 'max_salary', 'location', 'category', 'job_type', 'skills', 'education_level','date_posted','active']
 
     def validate(self, data):
         if data['min_salary'] > data['max_salary']:
@@ -155,8 +154,6 @@ class ExperienceSerializer(serializers.ModelSerializer):
 
 
 
-logger = logging.getLogger(__name__)
-
 class ResumeSerializer(serializers.ModelSerializer):
     candidate_skills = CandidateSkillSerializer(many=True)
     educations = EducationSerializer(many=True)
@@ -167,42 +164,37 @@ class ResumeSerializer(serializers.ModelSerializer):
         fields = ['id', 'candidate_skills', 'educations', 'experiences']
 
     def update(self, instance, validated_data):
-        logger.info("Starting update process for Resume ID: %s", instance.id)
-        logger.info("Validated data received: %s", validated_data)
 
         # Handle candidate_skills
         candidate_skills_data = validated_data.pop('candidate_skills', [])
-        logger.info("Processing candidate_skills: %s", candidate_skills_data)
         instance.candidate_skills.clear()
 
         for skill_data in candidate_skills_data:
             skill_id = skill_data.get('id')
             if skill_id:
-                logger.info("Updating existing skill with ID: %s", skill_id)
+                
                 skill = CandidateSkill.objects.get(id=skill_id)
                 for attr, value in skill_data.items():
                     setattr(skill, attr, value)
                 skill.save()
                 instance.candidate_skills.add(skill)
             else:
-                logger.info("Creating new skill: %s", skill_data)
+                
                 skill = CandidateSkill.objects.create(**skill_data)
                 instance.candidate_skills.add(skill)
 
         # Handle educations
         educations_data = validated_data.pop('educations', [])
-        logger.info("Processing educations: %s", educations_data)
         instance.educations.clear()
 
         for education_data in educations_data:
             education_id = education_data.get('id')
-            logger.info("Processing education ID: %s", education_id)
-
+           
             # Handle level
             level_data = education_data.pop('level', None)
             if level_data:
                 level_id = level_data.get('id')
-                logger.info("Handling level with ID: %s", level_id)
+                
                 if level_id:
                     level_instance = EducationLevel.objects.get(id=level_id)
                 else:
@@ -210,51 +202,65 @@ class ResumeSerializer(serializers.ModelSerializer):
                 education_data['level'] = level_instance
 
             if education_id:
-                logger.info("Updating existing education with ID: %s", education_id)
                 education = Education.objects.get(id=education_id)
                 for attr, value in education_data.items():
                     setattr(education, attr, value)
                 education.save()
                 instance.educations.add(education)
             else:
-                logger.info("Creating new education: %s", education_data)
                 education = Education.objects.create(**education_data)
                 instance.educations.add(education)
 
         # Handle experiences
         experiences_data = validated_data.pop('experiences', [])
-        logger.info("Processing experiences: %s", experiences_data)
         instance.experiences.clear()
 
         for experience_data in experiences_data:
             experience_id = experience_data.get('id')
-            logger.info("Processing experience ID: %s", experience_id)
             if experience_id:
-                logger.info("Updating existing experience with ID: %s", experience_id)
                 experience = Experience.objects.get(id=experience_id)
                 for attr, value in experience_data.items():
                     setattr(experience, attr, value)
                 experience.save()
                 instance.experiences.add(experience)
             else:
-                logger.info("Creating new experience: %s", experience_data)
                 experience = Experience.objects.create(**experience_data)
                 instance.experiences.add(experience)
 
-        logger.info("Saving updated Resume instance: %s", instance)
         instance.save()
-        logger.info("Update process completed for Resume ID: %s", instance.id)
 
         return instance
 
 
 
+class JobseekerSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+
+    class Meta:
+        model = JobSeeker
+        fields = ['id', 'user']
+
+    def get_user(self, obj):
+        return {
+            "first_name": obj.user.first_name,
+            "last_name": obj.user.last_name,
+        }
+
+
 class ApplicationSerializer(serializers.ModelSerializer):
-    job = JobSerializer()
+    jobseeker = JobseekerSerializer()
+    job = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
-        fields = ['id', 'job', 'application_date', 'status']
+        fields = ['id', 'job', 'jobseeker', 'application_date', 'status']
 
+    def get_job(self, obj):
+        return {
+            "id": obj.job.id,
+            "title": obj.job.title,
+            "location": obj.job.location,
+            "company_name": obj.job.employer.company_name,
+        }
 
 
