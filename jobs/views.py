@@ -11,6 +11,8 @@ from rest_framework import status
 from django.db.models import Q
 from rest_framework.exceptions import NotFound
 from rest_framework import viewsets, mixins
+from django.contrib.auth import logout
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class RegisterView(APIView):
@@ -216,3 +218,17 @@ class ApplicationStatusUpdateView(APIView):
                 return Response({"error": "Status is required."}, status=status.HTTP_400_BAD_REQUEST)
         except Application.DoesNotExist:
             return Response({"error": "Application not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class LogoutAPIView(APIView):
+    def post(self, request):
+        try:
+            refresh_token = request.data.get("refresh")
+            if not refresh_token:
+                return Response({"error": "Refresh token missing"}, status=400)
+
+            token = RefreshToken(refresh_token)
+            token.blacklist() 
+            return Response({"message": "Logout successful"}, status=200)
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
