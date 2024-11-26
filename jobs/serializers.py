@@ -91,6 +91,19 @@ class EmployerSerializer(serializers.ModelSerializer):
         fields = ['id', 'company_name']
 
 
+class CompanyProfileSerializer(serializers.ModelSerializer):
+    company_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CompanyProfile
+        fields = ['phone', 'email', 'website', 'profile_description', 'linkedin', 'facebook', 'twitter', 'tiktok', 'location', 'category', 'company_name']
+
+
+    def get_company_name(self, obj):
+        employer = Employer.objects.filter(company_profile=obj).first()
+        return employer.company_name if employer else None
+
+
 class JobSerializer(serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
     job_type = serializers.PrimaryKeyRelatedField(queryset=JobType.objects.all())
@@ -99,10 +112,11 @@ class JobSerializer(serializers.ModelSerializer):
     date_posted = serializers.DateTimeField(format="%Y-%m-%d %H:%M", read_only=True)
     active = serializers.BooleanField(read_only=True)
     id = serializers.ReadOnlyField()
+    employer_profile = CompanyProfileSerializer(source='employer.company_profile', read_only=True)
 
     class Meta:
         model = Job
-        fields = ['id','title', 'description', 'experience_level', 'min_salary', 'max_salary', 'location', 'category', 'job_type', 'skills', 'education_level','date_posted','active']
+        fields = ['id','title', 'description', 'experience_level', 'min_salary', 'max_salary', 'location', 'category', 'job_type', 'skills', 'education_level','date_posted','active','employer_profile']
 
     def validate(self, data):
         if data['min_salary'] > data['max_salary']:
@@ -117,11 +131,6 @@ class JobSerializer(serializers.ModelSerializer):
         job.skills.set(skills_data)
         return job
 
-
-class CompanyProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CompanyProfile
-        fields = ['phone', 'email', 'website', 'profile_description', 'linkedin', 'facebook', 'twitter', 'tiktok', 'location', 'category']
 
 class JobSeekerProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -262,5 +271,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
             "location": obj.job.location,
             "company_name": obj.job.employer.company_name,
         }
+
+
 
 

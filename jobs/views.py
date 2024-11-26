@@ -232,3 +232,32 @@ class LogoutAPIView(APIView):
             return Response({"message": "Logout successful"}, status=200)
         except Exception as e:
             return Response({"error": str(e)}, status=400)
+
+
+class CreateApplicationAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+
+            job_id = request.data.get("job")
+            if not job_id:
+                return Response({"error": "Job ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                job = Job.objects.get(id=job_id)
+            except Job.DoesNotExist:
+                return Response({"error": "Job not found."}, status=status.HTTP_404_NOT_FOUND)
+
+            jobseeker = getattr(request.user, 'jobseeker', None)
+            if not jobseeker:
+                return Response({"error": "Only jobseekers can apply for jobs."}, status=status.HTTP_403_FORBIDDEN)
+
+            if Application.objects.filter(job=job, jobseeker=jobseeker).exists():
+                return Response({"error": "You have already applied for this job."}, status=status.HTTP_400_BAD_REQUEST)
+
+            application = Application.objects.create(job=job, jobseeker=jobseeker)
+            return Response({"message": "Application submitted successfully."}, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
