@@ -96,7 +96,7 @@ class CompanyProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CompanyProfile
-        fields = ['phone', 'email', 'website', 'profile_description', 'linkedin', 'facebook', 'twitter', 'tiktok', 'location', 'category', 'company_name']
+        fields = ['id','phone', 'email', 'website', 'profile_description', 'linkedin', 'facebook', 'twitter', 'tiktok', 'location', 'category', 'company_name']
 
 
     def get_company_name(self, obj):

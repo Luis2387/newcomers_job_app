@@ -34,25 +34,25 @@ class UserTypeProfileView(APIView):
 
 
 class CategoryListView(generics.ListAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
 
 class JobTypeListView(generics.ListAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     queryset = JobType.objects.all()
     serializer_class = JobTypeSerializer
 
 
 class SkillListView(generics.ListAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     queryset = Skill.objects.all()
     serializer_class = SkillSerializer
 
 
 class EducationLevelListView(generics.ListAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     queryset = EducationLevel.objects.all()
     serializer_class = EducationLevelSerializer
 
@@ -133,10 +133,20 @@ class JobSearchAPIView(generics.ListAPIView):
 
 
 class EmployerProfileAPIView(generics.RetrieveUpdateAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     serializer_class = CompanyProfileSerializer
 
     def get_object(self):
+
+        profile_id = self.kwargs.get("id", None)
+        
+        if profile_id:
+            try:
+                profile = CompanyProfile.objects.get(id=profile_id)
+                return profile
+            except CompanyProfile.DoesNotExist:
+                raise NotFound("Company profile not found for the provided ID.")
+
         
         employer = getattr(self.request.user, 'employer', None)
         
@@ -147,10 +157,21 @@ class EmployerProfileAPIView(generics.RetrieveUpdateAPIView):
 
 
 class JobSeekerProfileAPIView(generics.RetrieveUpdateAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     serializer_class = JobSeekerProfileSerializer
 
     def get_object(self):
+
+        jobseeker_id = self.kwargs.get("id", None)
+        
+        if jobseeker_id:
+            try:
+                jobseeker = JobSeeker.objects.get(id=jobseeker_id)
+                if not jobseeker.jobseeker_profile:
+                    raise NotFound("Candidate profile not found for the provided jobseeker.")
+                return jobseeker.jobseeker_profile
+            except JobSeeker.DoesNotExist:
+                raise NotFound("JobSeeker not found.")
 
         jobseeker = getattr(self.request.user, 'jobseeker', None)
 
