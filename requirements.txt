@@ -7,3 +7,5 @@ PyJWT==2.8.0
 pytz==2024.2
 sqlparse==0.4.4
 typing-extensions==4.7.1
+dj-database-url
+
