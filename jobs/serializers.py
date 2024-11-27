@@ -267,10 +267,11 @@ class ResumeSerializer(serializers.ModelSerializer):
 class ApplicationSerializer(serializers.ModelSerializer):
     jobseeker = JobseekerSerializer()
     job = serializers.SerializerMethodField()
+    jobseeker_profile_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
-        fields = ['id', 'job', 'jobseeker', 'application_date', 'status']
+        fields = ['id', 'job', 'jobseeker','jobseeker_profile_id', 'application_date', 'status']
 
     def get_job(self, obj):
         return {
@@ -279,6 +280,12 @@ class ApplicationSerializer(serializers.ModelSerializer):
             "location": obj.job.location,
             "company_name": obj.job.employer.company_name,
         }
+
+    def get_jobseeker_profile_id(self, obj):
+        try:
+            return obj.jobseeker.jobseeker_profile.id
+        except AttributeError:
+            return None
 
 
 
