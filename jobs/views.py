@@ -312,3 +312,14 @@ class CreateApplicationAPIView(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def create_superuser(request):
+    if not User.objects.filter(is_superuser=True).exists():
+        User.objects.create_superuser(
+            username="admin",
+            email="admin@example.com",
+            password="Group4"
+        )
+        return JsonResponse({"message": "Superuser created"})
+    return JsonResponse({"message": "Superuser already exists"})

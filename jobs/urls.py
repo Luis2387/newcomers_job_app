@@ -19,7 +19,8 @@ from .views import (
     JobApplicantsAPIView,
     ApplicationStatusUpdateView,
     LogoutAPIView,
-    CreateApplicationAPIView)
+    CreateApplicationAPIView,
+    create_superuser)
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
@@ -49,4 +50,5 @@ urlpatterns = [
     path("applications/<int:pk>/", ApplicationStatusUpdateView.as_view(), name="update_application_status"),
     path('job-applicants/<int:job_id>/', JobApplicantsAPIView.as_view(), name='job-applicants'),
     path('apply/', CreateApplicationAPIView.as_view(), name='create-application'),
+    path('create-superuser/', create_superuser),
 ]
