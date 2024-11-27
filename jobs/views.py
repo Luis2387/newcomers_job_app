@@ -15,7 +15,8 @@ from django.contrib.auth import logout
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
-
+from django.contrib.auth import get_user_model
+from django.http import JsonResponse
 
 
 class RegisterView(APIView):
@@ -319,11 +320,12 @@ class CreateApplicationAPIView(APIView):
 
 @csrf_exempt
 def create_superuser(request):
+    User = get_user_model() 
     if not User.objects.filter(is_superuser=True).exists():
         User.objects.create_superuser(
-            username="admin",
+            username="admin", 
             email="admin@example.com",
-            password="Group4"
+            password="Group4" 
         )
-        return JsonResponse({"message": "Superuser created"})
-    return JsonResponse({"message": "Superuser already exists"})
+        return JsonResponse({"message": "Superuser created successfully"})
+    return JsonResponse({"message": "Superuser already exists"}, status=400)
