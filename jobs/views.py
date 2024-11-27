@@ -13,6 +13,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework import viewsets, mixins
 from django.contrib.auth import logout
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.views.decorators.csrf import csrf_exempt
 
 
 class RegisterView(APIView):
@@ -314,6 +315,7 @@ class CreateApplicationAPIView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@csrf_exempt
 def create_superuser(request):
     if not User.objects.filter(is_superuser=True).exists():
         User.objects.create_superuser(
