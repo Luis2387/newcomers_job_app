@@ -217,13 +217,18 @@ class ResumeAPIView(APIView):
 
         if not request.user.is_authenticated:
             return Response({"detail": "Authentication required for this action."}, status=status.HTTP_401_UNAUTHORIZED)
-        
+
+        print("Datos recibidos en el backend:", request.data)
+
         try:
             resume = Resume.objects.get(jobseeker_resume__user=request.user)
             serializer = ResumeSerializer(resume, data=request.data)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                print("Errores del serializer:", serializer.errors)  # Para depurar errores
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Resume.DoesNotExist:
             return Response({"detail": "Resume not found."}, status=status.HTTP_404_NOT_FOUND)
