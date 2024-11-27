@@ -44,6 +44,7 @@ urlpatterns = [
     path('candidate-profile/', JobSeekerProfileAPIView.as_view(), name='candidate-profile'),
     path("candidate-profile/<int:id>/", JobSeekerProfileAPIView.as_view(), name="candidate-profile-id"),
     path('resume/', ResumeAPIView.as_view(), name='resume'),
+    path('resume/<int:id>/', ResumeAPIView.as_view(), name='resume-id'),
     path('applications/', JobApplicationsListView.as_view(), name='job_applications_list'),
     path("applications/<int:pk>/", ApplicationStatusUpdateView.as_view(), name="update_application_status"),
     path('job-applicants/<int:job_id>/', JobApplicantsAPIView.as_view(), name='job-applicants'),

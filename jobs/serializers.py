@@ -132,10 +132,33 @@ class JobSerializer(serializers.ModelSerializer):
         return job
 
 
+class JobseekerSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+
+    class Meta:
+        model = JobSeeker
+        fields = ['id', 'user']
+
+    def get_user(self, obj):
+        return {
+            "first_name": obj.user.first_name,
+            "last_name": obj.user.last_name,
+        }
+
+
+
 class JobSeekerProfileSerializer(serializers.ModelSerializer):
+    jobseeker = JobseekerSerializer(read_only=True)
+
     class Meta:
         model = JobSeekerProfile
-        fields = ['profile_description', 'phone', 'email', 'website', 'linkedin', 'location']
+        fields = ['id','jobseeker','profile_description', 'phone', 'email', 'website', 'linkedin', 'location']
+
+    def get_user(self, obj):
+        return {
+            "first_name": obj.jobseeker.user.first_name,
+            "last_name": obj.jobseeker.user.last_name,
+        }
 
 
 class CandidateSkillSerializer(serializers.ModelSerializer):
@@ -239,21 +262,6 @@ class ResumeSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
-
-
-
-class JobseekerSerializer(serializers.ModelSerializer):
-    user = serializers.SerializerMethodField()
-
-    class Meta:
-        model = JobSeeker
-        fields = ['id', 'user']
-
-    def get_user(self, obj):
-        return {
-            "first_name": obj.user.first_name,
-            "last_name": obj.user.last_name,
-        }
 
 
 class ApplicationSerializer(serializers.ModelSerializer):

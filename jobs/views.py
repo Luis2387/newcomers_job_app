@@ -1,7 +1,7 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import generics
-from .models import Category, JobType, Skill, EducationLevel, Job, CompanyProfile, Employer, Resume, Application
+from .models import Category, JobType, Skill, EducationLevel, Job, CompanyProfile, Employer, Resume, Application, JobSeekerProfile, JobSeeker
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -157,21 +157,26 @@ class EmployerProfileAPIView(generics.RetrieveUpdateAPIView):
 
 
 class JobSeekerProfileAPIView(generics.RetrieveUpdateAPIView):
-    permission_classes = [AllowAny]
     serializer_class = JobSeekerProfileSerializer
+
+    def get_permissions(self):
+        if self.request.method == 'GET' and not self.kwargs.get("id"):
+            return [IsAuthenticated()]  # Asegura autenticación para peticiones sin ID
+        elif self.request.method == 'PUT':
+            return [IsAuthenticated()]
+        return [AllowAny()]
+
 
     def get_object(self):
 
-        jobseeker_id = self.kwargs.get("id", None)
+        profile_id = self.kwargs.get("id", None)
         
-        if jobseeker_id:
+        if profile_id:
             try:
-                jobseeker = JobSeeker.objects.get(id=jobseeker_id)
-                if not jobseeker.jobseeker_profile:
-                    raise NotFound("Candidate profile not found for the provided jobseeker.")
-                return jobseeker.jobseeker_profile
-            except JobSeeker.DoesNotExist:
-                raise NotFound("JobSeeker not found.")
+                profile = JobSeekerProfile.objects.get(id=profile_id)
+                return profile
+            except JobSeekerProfile.DoesNotExist:
+                raise NotFound("Candidate profile not found for the provided ID.")
 
         jobseeker = getattr(self.request.user, 'jobseeker', None)
 
@@ -182,17 +187,37 @@ class JobSeekerProfileAPIView(generics.RetrieveUpdateAPIView):
 
 
 class ResumeAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.request.method == 'GET' and not self.kwargs.get("id"):
+            return [IsAuthenticated()]  # Asegura autenticación para peticiones sin ID
+        elif self.request.method == 'PUT':
+            return [IsAuthenticated()]
+        return [AllowAny()]
 
-    def get(self, request):
+    def get(self, request, id=None):
+
         try:
-            resume = Resume.objects.get(jobseeker_resume__user=request.user)
+            if id:
+                jobseeker_profile = JobSeekerProfile.objects.get(id=id)
+                jobseeker = jobseeker_profile.jobseeker
+                resume = Resume.objects.get(jobseeker_resume=jobseeker)
+            else:
+                if not request.user.is_authenticated:
+                    return Response({"detail": "Authentication required for this action."}, status=status.HTTP_401_UNAUTHORIZED)
+                resume = Resume.objects.get(jobseeker_resume__user=request.user)
+            
             serializer = ResumeSerializer(resume)
             return Response(serializer.data, status=status.HTTP_200_OK)
+        except JobSeekerProfile.DoesNotExist:
+            return Response({"detail": "Candidate not found."}, status=status.HTTP_404_NOT_FOUND)
         except Resume.DoesNotExist:
             return Response({"detail": "Resume not found."}, status=status.HTTP_404_NOT_FOUND)
 
     def put(self, request):
+
+        if not request.user.is_authenticated:
+            return Response({"detail": "Authentication required for this action."}, status=status.HTTP_401_UNAUTHORIZED)
+        
         try:
             resume = Resume.objects.get(jobseeker_resume__user=request.user)
             serializer = ResumeSerializer(resume, data=request.data)
